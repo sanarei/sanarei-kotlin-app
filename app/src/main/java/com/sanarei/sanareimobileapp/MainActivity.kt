@@ -50,7 +50,7 @@ fun AppScreen() {
                                 .height(32.dp)
                                 .padding(end = 8.dp)
                         )
-                        Text("My App") // Optional title next to logo
+                        Text("Sanarei") // Optional title next to logo
                     }
                 }
             )
