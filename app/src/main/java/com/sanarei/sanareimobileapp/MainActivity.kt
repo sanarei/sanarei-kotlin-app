@@ -12,8 +12,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.example.yourapp.R // Replace with your actual R import
 import com.example.yourapp.ui.theme.YourAppTheme // Replace with your theme
+import com.sanarei.sanareimobileapp.R
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
