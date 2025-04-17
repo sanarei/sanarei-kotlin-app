@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            YourAppTheme {
+            SanareiMobileAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppScreen()
                 }
