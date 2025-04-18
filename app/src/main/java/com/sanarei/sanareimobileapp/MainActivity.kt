@@ -36,29 +36,25 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen() {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_logo), // Replace with your logo
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .height(32.dp)
-                                .padding(end = 8.dp)
-                        )
-                        Text("Sanarei") // Optional title next to logo
-                    }
+    Scaffold(topBar = {
+        TopAppBar(
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_logo), // Replace with your logo
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .height(32.dp)
+                            .padding(end = 8.dp)
+                    )
+                    Text("Sanarei") // Optional title next to logo
                 }
-            )
-        },
-        content = { innerPadding ->
-            UrlInputScreen(modifier = Modifier.padding(innerPadding))
-        }
-    )
+            })
+    }, content = { innerPadding ->
+        UrlInputScreen(modifier = Modifier.padding(innerPadding))
+    })
 }
 
 @Composable
@@ -77,8 +73,7 @@ fun UrlInputScreen(modifier: Modifier = Modifier) {
             onValueChange = { url = it },
             label = { Text("Enter the URL of the app") },
             singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
