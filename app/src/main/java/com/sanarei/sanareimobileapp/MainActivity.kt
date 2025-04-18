@@ -15,7 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.sanarei.sanareimobileapp.R
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
 class MainActivity : ComponentActivity() {
