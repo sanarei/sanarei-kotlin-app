@@ -91,6 +91,8 @@ fun UrlInputScreen(modifier: Modifier = Modifier) {
 @Composable
 fun AppScreenPreview() {
     SanareiMobileAppTheme {
-        AppScreen()
+        Surface(modifier = Modifier.fillMaxSize()) {
+            AppScreen()
+        }
     }
 }
