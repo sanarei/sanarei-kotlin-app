@@ -8,7 +8,7 @@ class UssdAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val source = event?.source ?: return
 
-        val text = source.text//?.joinToString(" ") ?: ""
+        val text = source.text?.toString() ?: "" ?: ""
         if (text.isNotEmpty()) {
             Log.d("USSD_RESPONSE", "USSD Text: $text")
             // You could broadcast this back to your app or show it in a UI
