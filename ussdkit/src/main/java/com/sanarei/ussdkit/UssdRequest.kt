@@ -1,5 +1,6 @@
 package com.sanarei.ussdkit
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -25,6 +26,7 @@ sealed class UssdResult {
 }
 
 // Main SDK class
+@SuppressLint("StaticFieldLeak")
 object UssdKit {
     private lateinit var context: Context
 
