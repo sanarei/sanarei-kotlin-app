@@ -71,7 +71,8 @@ class USSDInterceptorService : AccessibilityService() {
             "com.android.server.telecom",          // AOSP
             "com.samsung.android.incallui",        // Samsung
             "android.app.AlertDialog",             // Generic dialogs
-            "com.android.internal.app.AlertDialogActivity"
+            "com.android.internal.app.AlertDialogActivity",
+            "android.widget.ScrollView"
         ).any { className.contains(it, ignoreCase = true) }
     }
 
