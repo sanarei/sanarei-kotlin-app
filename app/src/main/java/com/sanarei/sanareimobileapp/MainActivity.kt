@@ -95,6 +95,12 @@ fun UrlInputScreen(modifier: Modifier = Modifier) {
             Log.d("ussdCode", "Attempting to dial: $uriUssdCode")
             val intent = Intent(Intent.ACTION_CALL, uriUssdCode)
 
+            val intent = Intent(context, UssdService::class.java).apply {
+                putExtra(UssdService.USSD_CODE, uriUssdCode)
+            }
+            context.start
+            ForegroundService(intent)
+
             // Check permission
             val permission = Manifest.permission.CALL_PHONE
             if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {

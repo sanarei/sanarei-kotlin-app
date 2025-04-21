@@ -122,7 +122,7 @@ class UssdService : Service() {
 
         val intent = Intent(ACTION_RESULT)
         intent.putExtra("result", result) // Use the direct method instead of apply
-        sendBroadcast(intent)
+        sendBroadcast   (intent)
         isRunning.set(false)
     }
 

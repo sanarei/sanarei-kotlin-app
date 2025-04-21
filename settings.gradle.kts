@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sanarei Mobile App"
 include(":app")
- 
+include(":ussdkit")
