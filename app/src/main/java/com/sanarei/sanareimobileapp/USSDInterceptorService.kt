@@ -36,14 +36,6 @@ class USSDInterceptorService : AccessibilityService() {
                     Log.d("USSDInterceptor", "Dismiss button not found")
                 }
             }
-
-
-            if (className?.contains("AlertDialog") == true || className?.contains("Ussd") == true) {
-                val node = event.source ?: return
-                val dismissButton =
-                    findNodeWithText(node, "OK") ?: findNodeWithText(node, "Dismiss")
-                dismissButton?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            }
         }
     }
 
