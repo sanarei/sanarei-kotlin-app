@@ -113,9 +113,15 @@ class UssdService : Service() {
     }
 
     private fun broadcastResult(result: UssdResult) {
-        val intent = Intent(ACTION_RESULT).apply {
-            putExtra("result", result)
-        }
+//        val intent = Intent(ACTION_RESULT).apply {
+//            putExtra("result", result)
+//        }
+//        sendBroadcast(intent)
+//        isRunning.set(false)
+
+
+        val intent = Intent(ACTION_RESULT)
+        intent.putExtra("result", result) // Use the direct method instead of apply
         sendBroadcast(intent)
         isRunning.set(false)
     }
