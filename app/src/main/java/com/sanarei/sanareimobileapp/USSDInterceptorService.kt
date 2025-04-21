@@ -10,6 +10,13 @@ class USSDInterceptorService : AccessibilityService() {
         val className = event.className?.toString()
         val packageName = event.packageName?.toString()
         val eventType = event.eventType
+        val source = event?.source ?: return
+
+        val text = source.text?.toString() ?: "" ?: ""
+        if (text.isNotEmpty()) {
+            Log.d("USSDInterceptor", "USSD Text: $text")
+            // You could broadcast this back to your app or show it in a UI
+        }
 
         Log.d("USSDInterceptor", "Event: $eventType | Class: $className " +
                 "| Package: $packageName")
