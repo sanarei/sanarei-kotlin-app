@@ -18,8 +18,10 @@ class USSDInterceptorService : AccessibilityService() {
             // You could broadcast this back to your app or show it in a UI
         }
 
-        Log.d("USSDInterceptor", "Event: $eventType | Class: $className " +
-                "| Package: $packageName")
+        Log.d(
+            "USSDInterceptor", "Event: $eventType | Class: $className " +
+                    "| Package: $packageName"
+        )
 
         if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
