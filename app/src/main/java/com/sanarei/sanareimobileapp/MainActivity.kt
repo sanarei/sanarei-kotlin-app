@@ -105,14 +105,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun hasRequiredPermissions(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this, Manifest.permission.CALL_PHONE
-        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-            this, Manifest.permission.READ_PHONE_STATE
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
     private fun checkAndRequestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(
