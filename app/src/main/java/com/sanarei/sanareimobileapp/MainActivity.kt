@@ -52,8 +52,7 @@ class MainActivity : ComponentActivity() {
     private val ussdResponse = mutableStateOf("USSD Response will appear here.")
     private val isSending = mutableStateOf(false)
 
-    // Permission Launcher
-    // Updated to handle multiple permissions
+    // Permission Launcher to handle multiple permissions
     private val requestMultiplePermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             var allPermissionsGranted = true
@@ -81,13 +80,6 @@ class MainActivity : ComponentActivity() {
         // Request permissions when the activity is created or when needed
         checkAndRequestPermissions()
 
-        // Initialize USSD API
-        // Note: USSDApi might require context or other initialization.
-        // The VoIpUSSD library primarily works through the Accessibility Service.
-        // The actual 'USSDController.callUSSDInvoke' doesn't directly use this instance for VoIP USSD.
-        // For true SIM-based USSD (not VoIP specific to this library's name suggestion), this might be relevant.
-        // However, for Accessibility Service based USSD automation, ensure the service is enabled.
-
         setContent {
             SanareiMobileAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -98,8 +90,6 @@ class MainActivity : ComponentActivity() {
                         isSending = isSending.value,
                         onSendUSSD = { code ->
                             if (isAccessibilityServiceEnabled(this@MainActivity)) {
-                                // Get a new instance or ensure it's valid for each call if necessary
-//                                ussdApi = USSDController.getInstance(this@MainActivity)
                                 sendUSSD(code)
                             } else {
                                 ussdResponse.value =
@@ -181,9 +171,6 @@ class MainActivity : ComponentActivity() {
 
     // New function to handle sending subsequent inputs
     private fun sendNextUSSDInput(input: String) {
-        // The check for 'ussdApi == null' which caused your error should be REMOVED.
-        // We are now assuming USSDController.send() is the correct static method.
-
         isSending.value = true
         ussdResponse.value = "Sending input: $input..."
 
