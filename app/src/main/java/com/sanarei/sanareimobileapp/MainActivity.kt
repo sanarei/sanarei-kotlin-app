@@ -53,21 +53,33 @@ class MainActivity : ComponentActivity() {
     private val isSending = mutableStateOf(false)
 
     // Permission Launcher
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                Toast.makeText(this, "CALL_PHONE permission granted", Toast.LENGTH_SHORT).show()
-                // You can now initiate USSD call if needed, or just inform the user
+    // Updated to handle multiple permissions
+    private val requestMultiplePermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            var allPermissionsGranted = true
+            permissions.entries.forEach {
+                if (!it.value) {
+                    allPermissionsGranted = false
+                    Toast.makeText(this, "${it.key} permission denied.", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            if (allPermissionsGranted) {
+                Toast.makeText(this, "All required permissions granted!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "CALL_PHONE permission denied. USSD calls may not work.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Some permissions were denied. The app might not function correctly.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check for CALL_PHONE permission
-        requestCallPhonePermission()
+        // Request permissions when the activity is created or when needed
+        checkAndRequestPermissions()
 
         // Initialize USSD API
         // Note: USSDApi might require context or other initialization.
@@ -90,8 +102,13 @@ class MainActivity : ComponentActivity() {
 //                                ussdApi = USSDController.getInstance(this@MainActivity)
                                 sendUSSD(code)
                             } else {
-                                ussdResponse.value = "Accessibility Service for VoIpUSSD is not enabled. Please enable it in settings."
-                                Toast.makeText(this@MainActivity, "Please enable the USSD Accessibility Service", Toast.LENGTH_LONG).show()
+                                ussdResponse.value =
+                                    "Accessibility Service for VoIpUSSD is not enabled. Please enable it in settings."
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Please enable the USSD Accessibility Service",
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 startActivity(intent)
                             }
@@ -99,21 +116,37 @@ class MainActivity : ComponentActivity() {
                         onEnableAccessibilityClicked = {
                             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                             startActivity(intent)
-                        }
-                    )
+                        })
                 }
             }
         }
     }
 
-    private fun requestCallPhonePermission() {
-        when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) -> {
-                // Permission is already granted
-            }
-            else -> {
-                requestPermissionLauncher.launch(Manifest.permission.CALL_PHONE)
-            }
+    private fun hasRequiredPermissions(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+            this, Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkAndRequestPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.CALL_PHONE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest.add(Manifest.permission.CALL_PHONE)
+        }
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest.add(Manifest.permission.READ_PHONE_STATE)
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 
@@ -125,27 +158,37 @@ class MainActivity : ComponentActivity() {
         isSending.value = true
         ussdResponse.value = "Sending USSD: $code..."
 
-        USSDController.callUSSDInvoke(this, Uri.encode(code), 1, map, object : USSDController.CallbackInvoke {
-            override fun responseInvoke(message: String) {
-                ussdResponse.value = "Initial Response: $message"
-                isSending.value = false // Update UI
+        USSDController.callUSSDInvoke(
+            this, Uri.encode(code), 1, map, object : USSDController.CallbackInvoke {
+                override fun responseInvoke(message: String) {
+                    ussdResponse.value = "Initial Response: $message"
+                    isSending.value = false // Update UI
 
-                // Example of how you might handle a multi-step scenario:
-                // Let's say if the message contains "options:", we send "1"
-                if (message.contains("options:", ignoreCase = true) || message.contains("menu", ignoreCase = true)) {
-                    Toast.makeText(this@MainActivity, "Detected options, sending '1'", Toast.LENGTH_SHORT).show()
-                    sendNextUSSDInput("1")
-                } else {
-                    // Session might be over or no clear prompt for next step from this initial response
-                    Toast.makeText(this@MainActivity, "Session might be complete or no clear next step.", Toast.LENGTH_SHORT).show()
+                    // Example of how you might handle a multi-step scenario:
+                    // Let's say if the message contains "options:", we send "1"
+                    if (message.contains("options:", ignoreCase = true) || message.contains(
+                            "menu", ignoreCase = true
+                        )
+                    ) {
+                        Toast.makeText(
+                            this@MainActivity, "Detected options, sending '1'", Toast.LENGTH_SHORT
+                        ).show()
+                        sendNextUSSDInput("1")
+                    } else {
+                        // Session might be over or no clear prompt for next step from this initial response
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Session might be complete or no clear next step.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
-            }
 
-            override fun over(message: String) {
-                ussdResponse.value = "Session Over: $message"
-                isSending.value = false
-            }
-        })
+                override fun over(message: String) {
+                    ussdResponse.value = "Session Over: $message"
+                    isSending.value = false
+                }
+            })
     }
 
     // New function to handle sending subsequent inputs
@@ -172,13 +215,17 @@ class MainActivity : ComponentActivity() {
             // if (responseMessage.contains("another prompt", ignoreCase = true)) {
             //     sendNextUSSDInput("2") // Example: send "2" next
             // }
-            Toast.makeText(this@MainActivity, "Received response to input '$input'", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this@MainActivity, "Received response to input '$input'", Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {
         val expectedComponentName = packageName + "/com.romellfudi.ussdlibrary.USSDServiceKT"
-        val enabledServicesSetting = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        val enabledServicesSetting = Settings.Secure.getString(
+            context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )
         return enabledServicesSetting?.contains(expectedComponentName, ignoreCase = true) ?: false
     }
 }
@@ -190,7 +237,7 @@ fun USSDScreen(
     response: String,
     isSending: Boolean,
     onSendUSSD: (String) -> Unit,
-    onEnableAccessibilityClicked: () -> Unit
+    onEnableAccessibilityClicked: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -220,8 +267,7 @@ fun USSDScreen(
         ) {
             if (isSending) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Processing...")
@@ -231,15 +277,13 @@ fun USSDScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = onEnableAccessibilityClicked,
-            modifier = Modifier.fillMaxWidth()
+            onClick = onEnableAccessibilityClicked, modifier = Modifier.fillMaxWidth()
         ) {
             Text("Enable Accessibility Service")
         }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Response:",
-            style = MaterialTheme.typography.titleMedium
+            text = "Response:", style = MaterialTheme.typography.titleMedium
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
