@@ -112,10 +112,6 @@ class MainActivity : ComponentActivity() {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 startActivity(intent)
                             }
-                        },
-                        onEnableAccessibilityClicked = {
-                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                            startActivity(intent)
                         })
                 }
             }
@@ -226,7 +222,6 @@ fun USSDScreen(
     response: String,
     isSending: Boolean,
     onSendUSSD: (String) -> Unit,
-    onEnableAccessibilityClicked: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -263,12 +258,6 @@ fun USSDScreen(
             } else {
                 Text("Send USSD")
             }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onEnableAccessibilityClicked, modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Enable Accessibility Service")
         }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
