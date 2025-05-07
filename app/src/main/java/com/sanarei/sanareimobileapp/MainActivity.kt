@@ -165,9 +165,6 @@ class MainActivity : ComponentActivity() {
                     isSending.value = false // Update UI
 
                     if (message.contains("Welcome", ignoreCase = true)) {
-                        Toast.makeText(
-                            this@MainActivity, "Detected options, sending '2'", Toast.LENGTH_SHORT
-                        ).show()
                         sendNextUSSDInput("2")
                     } else {
                         // Session might be over or no clear prompt for next step from this initial response
@@ -198,11 +195,6 @@ class MainActivity : ComponentActivity() {
             // This is the lambda callback for the response to USSDController.send(input)
             ussdResponse.value = "Next Response: $responseMessage"
             isSending.value = false
-            Toast.makeText(
-                this@MainActivity,
-                "Received response to input '$input': $responseMessage",
-                Toast.LENGTH_LONG
-            ).show()
 
             if (responseMessage.contains("Enter your HO", ignoreCase = true)) {
                 sendNextUSSDInput("6758936") // Send store number
