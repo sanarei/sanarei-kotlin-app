@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Sanarei</string>
+    <string name="ussd_accessibility_service_description">This service is required to automate USSD interactions for VoIP.</string>
 </resources>
