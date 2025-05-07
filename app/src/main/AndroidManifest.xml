@@ -2,18 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature
-        android:name="android.hardware.telephony"
-        android:required="false" />
+
 
     <!-- Permission to make calls -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="true" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Permission for accessibility service -->
-    <uses-permission
-        android:name="android.permission.BIND_ACCESSIBILITY_SERVICE"
-        tools:ignore="ProtectedPermissions" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -36,15 +32,16 @@
         </activity>
 
         <service
+            android:name="com.romellfudi.ussdlibrary.USSDServiceKT"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
-
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/ussd_interceptor_config" />
+                android:resource="@xml/ussd_service_config" />
         </service>
-
     </application>
 
 </manifest>
