@@ -159,17 +159,12 @@ class MainActivity : ComponentActivity() {
         ussdResponse.value = "Sending USSD: $code..."
 
         USSDController.callUSSDInvoke(
-            this, Uri.encode(code), 1, map, object : USSDController.CallbackInvoke {
+            this, Uri.encode(code), 0, map, object : USSDController.CallbackInvoke {
                 override fun responseInvoke(message: String) {
                     ussdResponse.value = "Initial Response: $message"
                     isSending.value = false // Update UI
 
-                    // Example of how you might handle a multi-step scenario:
-                    // Let's say if the message contains "options:", we send "1"
-                    if (message.contains("Welcome", ignoreCase = true) || message.contains(
-                            "menu", ignoreCase = true
-                        )
-                    ) {
+                    if (message.contains("Welcome", ignoreCase = true)) {
                         Toast.makeText(
                             this@MainActivity, "Detected options, sending '2'", Toast.LENGTH_SHORT
                         ).show()
@@ -203,12 +198,23 @@ class MainActivity : ComponentActivity() {
             // This is the lambda callback for the response to USSDController.send(input)
             ussdResponse.value = "Next Response: $responseMessage"
             isSending.value = false
-            Toast.makeText(this@MainActivity, "Received response to input '$input': $responseMessage", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@MainActivity,
+                "Received response to input '$input': $responseMessage",
+                Toast.LENGTH_LONG
+            ).show()
 
-            // Example of further chaining:
-            // if (responseMessage.contains("enter amount", ignoreCase = true)) {
-            //     sendNextUSSDInput("100") // send an amount
-            // }
+            if (responseMessage.contains("Enter your HO", ignoreCase = true)) {
+                sendNextUSSDInput("6758936") // Send store number
+            } else if (responseMessage.contains("Account Services", ignoreCase = true)) {
+                sendNextUSSDInput("5") // Select Account Services
+            } else if (responseMessage.contains("Check Balance", ignoreCase = true)) {
+                sendNextUSSDInput("2") // Select Check Balance
+            } else if (responseMessage.contains("Enter Operator ID", ignoreCase = true)) {
+                sendNextUSSDInput("BK") // Select Check Balance
+            } else if (responseMessage.contains("Enter Operator PIN", ignoreCase = true)) {
+                sendNextUSSDInput("****") // Select Check Balance
+            }
         }
     }
 
