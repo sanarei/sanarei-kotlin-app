@@ -260,7 +260,12 @@ fun USSDScreen(
 fun AppScreenPreview() {
     SanareiMobileAppTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-//            USSDScreen() { }
+            USSDScreen(
+                ussdCode = "*123#",
+                onUssdCodeChange = {},
+                response = "USSD Response will appear here.",
+                isSending = false,
+                onSendUSSD = {})
         }
     }
 }
