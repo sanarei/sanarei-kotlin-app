@@ -166,14 +166,14 @@ class MainActivity : ComponentActivity() {
 
                     // Example of how you might handle a multi-step scenario:
                     // Let's say if the message contains "options:", we send "1"
-                    if (message.contains("options:", ignoreCase = true) || message.contains(
+                    if (message.contains("Welcome", ignoreCase = true) || message.contains(
                             "menu", ignoreCase = true
                         )
                     ) {
                         Toast.makeText(
-                            this@MainActivity, "Detected options, sending '1'", Toast.LENGTH_SHORT
+                            this@MainActivity, "Detected options, sending '2'", Toast.LENGTH_SHORT
                         ).show()
-                        sendNextUSSDInput("1")
+                        sendNextUSSDInput("2")
                     } else {
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
@@ -193,31 +193,22 @@ class MainActivity : ComponentActivity() {
 
     // New function to handle sending subsequent inputs
     private fun sendNextUSSDInput(input: String) {
-        if (ussdApi == null) {
-            ussdResponse.value = "Error: USSD API not initialized for multi-step."
-            Toast.makeText(this@MainActivity, "USSD API not ready.", Toast.LENGTH_SHORT).show()
-            isSending.value = false
-            return
-        }
+        // The check for 'ussdApi == null' which caused your error should be REMOVED.
+        // We are now assuming USSDController.send() is the correct static method.
 
-        isSending.value = true // Indicate we are working
+        isSending.value = true
         ussdResponse.value = "Sending input: $input..."
 
-        // Here's how you use the lambda for the callback with the send method:
-        ussdApi?.send(input) { responseMessage ->
-            // This is the lambda that will be executed with the response
-            // to your ussdApi.send(input) command.
+        USSDController.send(input) { responseMessage ->
+            // This is the lambda callback for the response to USSDController.send(input)
             ussdResponse.value = "Next Response: $responseMessage"
-            isSending.value = false // Update UI
+            isSending.value = false
+            Toast.makeText(this@MainActivity, "Received response to input '$input': $responseMessage", Toast.LENGTH_LONG).show()
 
-            // You can chain further logic here if needed
-            // For example, if responseMessage needs another input:
-            // if (responseMessage.contains("another prompt", ignoreCase = true)) {
-            //     sendNextUSSDInput("2") // Example: send "2" next
+            // Example of further chaining:
+            // if (responseMessage.contains("enter amount", ignoreCase = true)) {
+            //     sendNextUSSDInput("100") // send an amount
             // }
-            Toast.makeText(
-                this@MainActivity, "Received response to input '$input'", Toast.LENGTH_SHORT
-            ).show()
         }
     }
 
