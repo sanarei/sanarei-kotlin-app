@@ -36,9 +36,6 @@
         </activity>
 
         <service
-            android:name=".USSDInterceptorService"
-            android:exported="true"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
