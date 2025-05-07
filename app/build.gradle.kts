@@ -41,6 +41,8 @@ android {
 
 dependencies {
 
+    implementation("androidx.appcompat:appcompat:1.6.1") // Use the latest stable version
+    implementation("com.github.romellfudi.VoIpUSSD:kotlin-ussd-library:1.4.a") // Replace 1.4.b with the latest version
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
