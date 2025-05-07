@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.romellfudi.ussdlibrary.SplashLoadingService
 import com.romellfudi.ussdlibrary.USSDController
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
@@ -132,6 +133,8 @@ class MainActivity : ComponentActivity() {
         }
         isSending.value = true
         ussdResponse.value = "Sending USSD: $code..."
+        val svc = Intent(this@MainActivity, SplashLoadingService::class.java)
+        this@MainActivity.startService(svc) // Show the overlay
 
         USSDController.callUSSDInvoke(
             this, Uri.encode(code), 0, map, object : USSDController.CallbackInvoke {
@@ -154,6 +157,7 @@ class MainActivity : ComponentActivity() {
                 override fun over(message: String) {
                     ussdResponse.value = "Session Over: $message"
                     isSending.value = false
+                    this@MainActivity.stopService(svc) // Dismiss the overlay
                 }
             })
     }
