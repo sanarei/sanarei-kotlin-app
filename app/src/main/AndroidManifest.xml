@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.sanarei.sanareimobileapp">
 
-
     <!-- Permission to make calls -->
     <uses-feature
         android:name="android.hardware.telephony"
