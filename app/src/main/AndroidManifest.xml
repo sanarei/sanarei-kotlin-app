@@ -48,10 +48,6 @@
                 android:resource="@xml/ussd_interceptor_config" />
         </service>
 
-        <service
-            android:name=".OverlayService"
-            android:exported="false"
-            android:permission="android.permission.SYSTEM_ALERT_WINDOW" />
     </application>
 
 </manifest>
