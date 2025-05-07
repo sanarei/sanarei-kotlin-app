@@ -40,8 +40,6 @@ import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
 
 class MainActivity : ComponentActivity() {
-    private var ussdApi: USSDApi? = null
-
     private val map: HashMap<String, List<String>> = HashMap<String, List<String>>().apply {
         put("KEY_LOGIN", listOf("espere", "waiting", "loading", "esperando", "Espere por favor"))
         put("KEY_ERROR", listOf("problema", "problem", "error", "null", "invalid", "failed"))
