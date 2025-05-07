@@ -1,159 +1,255 @@
 package com.sanarei.sanareimobileapp
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
-import androidx.core.view.WindowCompat
+import com.romellfudi.ussdlibrary.USSDApi
+import com.romellfudi.ussdlibrary.USSDController
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
 
 class MainActivity : ComponentActivity() {
+    private var ussdApi: USSDApi? = null
+
+    private val map: HashMap<String, List<String>> = HashMap<String, List<String>>().apply {
+        put("KEY_LOGIN", listOf("espere", "waiting", "loading", "esperando", "Espere por favor"))
+        put("KEY_ERROR", listOf("problema", "problem", "error", "null", "invalid", "failed"))
+    }
+
+    // State for USSD code input and response
+    private val ussdCode = mutableStateOf("*234#") // Default or empty
+    private val ussdResponse = mutableStateOf("USSD Response will appear here.")
+    private val isSending = mutableStateOf(false)
+
+    // Permission Launcher
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(this, "CALL_PHONE permission granted", Toast.LENGTH_SHORT).show()
+                // You can now initiate USSD call if needed, or just inform the user
+            } else {
+                Toast.makeText(this, "CALL_PHONE permission denied. USSD calls may not work.", Toast.LENGTH_LONG).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable edge-to-edge layout
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Check for CALL_PHONE permission
+        requestCallPhonePermission()
+
+        // Initialize USSD API
+        // Note: USSDApi might require context or other initialization.
+        // The VoIpUSSD library primarily works through the Accessibility Service.
+        // The actual 'USSDController.callUSSDInvoke' doesn't directly use this instance for VoIP USSD.
+        // For true SIM-based USSD (not VoIP specific to this library's name suggestion), this might be relevant.
+        // However, for Accessibility Service based USSD automation, ensure the service is enabled.
 
         setContent {
             SanareiMobileAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppScreen()
+                    USSDScreen(
+                        ussdCode = ussdCode.value,
+                        onUssdCodeChange = { ussdCode.value = it },
+                        response = ussdResponse.value,
+                        isSending = isSending.value,
+                        onSendUSSD = { code ->
+                            if (isAccessibilityServiceEnabled(this@MainActivity)) {
+                                // Get a new instance or ensure it's valid for each call if necessary
+//                                ussdApi = USSDController.getInstance(this@MainActivity)
+                                sendUSSD(code)
+                            } else {
+                                ussdResponse.value = "Accessibility Service for VoIpUSSD is not enabled. Please enable it in settings."
+                                Toast.makeText(this@MainActivity, "Please enable the USSD Accessibility Service", Toast.LENGTH_LONG).show()
+                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                startActivity(intent)
+                            }
+                        },
+                        onEnableAccessibilityClicked = {
+                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            startActivity(intent)
+                        }
+                    )
                 }
             }
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AppScreen() {
-    var ussdResponse by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
-
-    val requestPermissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                runUssdCode(this, "*123#", {
-                    ussdResponse = it
-                    isLoading = false
-                }, {
-                    ussdResponse = "USSD failed: $it"
-                    isLoading = false
-                })
+    private fun requestCallPhonePermission() {
+        when (PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) -> {
+                // Permission is already granted
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.CALL_PHONE)
             }
         }
+    }
 
-    Scaffold(topBar = {
-        TopAppBar(
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_logo), // Replace with your logo
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .height(32.dp)
-                            .padding(end = 8.dp)
-                    )
-                    Text("Sanarei") // Optional title next to logo
+    private fun sendUSSD(code: String) {
+        if (code.isBlank()) {
+            ussdResponse.value = "USSD code cannot be empty."
+            return
+        }
+        isSending.value = true
+        ussdResponse.value = "Sending USSD: $code..."
+
+        USSDController.callUSSDInvoke(this, Uri.encode(code), 1, map, object : USSDController.CallbackInvoke {
+            override fun responseInvoke(message: String) {
+                ussdResponse.value = "Initial Response: $message"
+                isSending.value = false // Update UI
+
+                // Example of how you might handle a multi-step scenario:
+                // Let's say if the message contains "options:", we send "1"
+                if (message.contains("options:", ignoreCase = true) || message.contains("menu", ignoreCase = true)) {
+                    Toast.makeText(this@MainActivity, "Detected options, sending '1'", Toast.LENGTH_SHORT).show()
+                    sendNextUSSDInput("1")
+                } else {
+                    // Session might be over or no clear prompt for next step from this initial response
+                    Toast.makeText(this@MainActivity, "Session might be complete or no clear next step.", Toast.LENGTH_SHORT).show()
                 }
-            })
-    }, content = { innerPadding ->
-        UrlInputScreen(modifier = Modifier.padding(innerPadding))
-    })
+            }
+
+            override fun over(message: String) {
+                ussdResponse.value = "Session Over: $message"
+                isSending.value = false
+            }
+        })
+    }
+
+    // New function to handle sending subsequent inputs
+    private fun sendNextUSSDInput(input: String) {
+        if (ussdApi == null) {
+            ussdResponse.value = "Error: USSD API not initialized for multi-step."
+            Toast.makeText(this@MainActivity, "USSD API not ready.", Toast.LENGTH_SHORT).show()
+            isSending.value = false
+            return
+        }
+
+        isSending.value = true // Indicate we are working
+        ussdResponse.value = "Sending input: $input..."
+
+        // Here's how you use the lambda for the callback with the send method:
+        ussdApi?.send(input) { responseMessage ->
+            // This is the lambda that will be executed with the response
+            // to your ussdApi.send(input) command.
+            ussdResponse.value = "Next Response: $responseMessage"
+            isSending.value = false // Update UI
+
+            // You can chain further logic here if needed
+            // For example, if responseMessage needs another input:
+            // if (responseMessage.contains("another prompt", ignoreCase = true)) {
+            //     sendNextUSSDInput("2") // Example: send "2" next
+            // }
+            Toast.makeText(this@MainActivity, "Received response to input '$input'", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+        val expectedComponentName = packageName + "/com.romellfudi.ussdlibrary.USSDServiceKT"
+        val enabledServicesSetting = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        return enabledServicesSetting?.contains(expectedComponentName, ignoreCase = true) ?: false
+    }
 }
 
 @Composable
-fun UrlInputScreen(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var url by remember { mutableStateOf(TextFieldValue("*234#")) }
-
+fun USSDScreen(
+    ussdCode: String,
+    onUssdCodeChange: (String) -> Unit,
+    response: String,
+    isSending: Boolean,
+    onSendUSSD: (String) -> Unit,
+    onEnableAccessibilityClicked: () -> Unit
+) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text("Enter the URL of the app") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "VoIP USSD Interaction",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
+        OutlinedTextField(
+            value = ussdCode,
+            onValueChange = onUssdCodeChange,
+            label = { Text("Enter USSD Code") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
         Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            val ussdCode = "tel:" + url.text.replace("#", "%23")
-            val uriUssdCode = ussdCode.toUri()
-            Log.d("ussdCode", "Attempting to dial: $uriUssdCode")
-            val intent = Intent(Intent.ACTION_CALL, uriUssdCode)
-
-            // Check permission
-            val permission = Manifest.permission.CALL_PHONE
-            if (ContextCompat.checkSelfPermission(
-                    context, permission
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                context.startActivity(intent)
+        Button(
+            onClick = { onSendUSSD(ussdCode) },
+            enabled = !isSending,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isSending) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Processing...")
             } else {
-                ActivityCompat.requestPermissions(
-                    context as ComponentActivity, arrayOf(permission), 1
-                )
+                Text("Send USSD")
             }
-
-            if (!Settings.canDrawOverlays(context)) {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    "package:com.sanarei.sanareimobileapp".toUri()
-                )
-                context.startActivity(intent)
-            }
-        }) {
-            Text("Submit", fontSize = 16.sp)
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onEnableAccessibilityClicked,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Enable Accessibility Service")
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Response:",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = response,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 100.dp)
+                .padding(8.dp) // For better text visibility
+        )
     }
 }
 
@@ -162,7 +258,7 @@ fun UrlInputScreen(modifier: Modifier = Modifier) {
 fun AppScreenPreview() {
     SanareiMobileAppTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            AppScreen()
+//            USSDScreen() { }
         }
     }
 }
