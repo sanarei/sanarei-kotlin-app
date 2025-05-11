@@ -34,6 +34,8 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".UssdForegroundService" />
+
         <service
             android:name="com.romellfudi.ussdlibrary.USSDServiceKT"
             android:exported="false"
