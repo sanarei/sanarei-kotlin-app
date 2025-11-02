@@ -142,8 +142,8 @@ class MainActivity : ComponentActivity() {
                     ussdResponse.value = "Initial Response: $message"
                     isSending.value = false // Update UI
 
-                    if (message.contains("Welcome", ignoreCase = true)) {
-                        sendNextUSSDInput("2")
+                    if (message.contains("Enter App domain", ignoreCase = true)) {
+                        sendNextUSSDInput("https://bc359ddd8471.ngrok-free.app")
                     } else {
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
@@ -172,16 +172,15 @@ class MainActivity : ComponentActivity() {
             ussdResponse.value = "Next Response: $responseMessage"
             isSending.value = false
 
-            if (responseMessage.contains("Enter your HO", ignoreCase = true)) {
-                sendNextUSSDInput("6758936") // Send store number
-            } else if (responseMessage.contains("Account Services", ignoreCase = true)) {
-                sendNextUSSDInput("5") // Select Account Services
-            } else if (responseMessage.contains("Check Balance", ignoreCase = true)) {
-                sendNextUSSDInput("2") // Select Check Balance
-            } else if (responseMessage.contains("Enter Operator ID", ignoreCase = true)) {
-                sendNextUSSDInput("BK") // Select Check Balance
-            } else if (responseMessage.contains("Enter Operator PIN", ignoreCase = true)) {
-                sendNextUSSDInput("****") // Select Check Balance
+            if (responseMessage.contains("DOMAIN SET", ignoreCase = true)) {
+                sendNextUSSDInput("FETCH") // Send store number
+            } else if (responseMessage.contains("PACKETS READY", ignoreCase = true)) {
+                sendNextUSSDInput("SEND PACKETS") // Select Account Services
+            } else if (responseMessage.contains("ALL PACKETS SENT", ignoreCase = true)) {
+                sendNextUSSDInput("END SESSION") // Select Account Services
+                // Compile all packets received
+            } else {
+                sendNextUSSDInput("SEND NEXT PACKETS") // Fetch all the packets
             }
         }
     }
