@@ -46,8 +46,8 @@ class MainActivity : ComponentActivity() {
     }
 
     // State for USSD code input and response
-    private val ussdResponse = mutableStateOf("USSD Response will appear here.")
     private val website = mutableStateOf("https://bc359ddd8471.ngrok-free.app") // Default or empty
+    private val ussdResponse = mutableStateOf("The website will be loaded below.")
     private val isSending = mutableStateOf(false)
     private val capturedUssdMessages = mutableListOf<String>()
 
