@@ -212,12 +212,12 @@ fun USSDScreen(
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
         Text(
             text = "Sanarei Offline Web Browsing",
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp, top = 24.dp)
         )
 
         OutlinedTextField(
