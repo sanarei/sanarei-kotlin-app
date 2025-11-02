@@ -182,7 +182,9 @@ class MainActivity : ComponentActivity() {
                 sendNextUSSDInput("END SESSION") // Select Account Services
                 // Compile all packets received
             } else {
-                capturedUssdMessages.add(responseMessage)
+                val mainReponseMessage = responseMessage.removePrefix("[")
+                    .removeSuffix("]").split(",").first().trim()
+                capturedUssdMessages.add(mainReponseMessage)
                 sendNextUSSDInput("SEND NEXT PACKETS") // Fetch all the packets
             }
         }
