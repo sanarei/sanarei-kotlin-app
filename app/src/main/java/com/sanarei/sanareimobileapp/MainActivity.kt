@@ -7,10 +7,13 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.method.LinkMovementMethod
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,12 +32,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import android.widget.TextView
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.romellfudi.ussdlibrary.SplashLoadingService
@@ -205,6 +211,33 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+fun HtmlScreen(html: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                TextView(context).apply {
+                    movementMethod = LinkMovementMethod.getInstance() // make links clickable
+                    setTextIsSelectable(true)
+                }
+            },
+            update = { textView ->
+                textView.text = HtmlCompat.fromHtml(
+                    html,
+                    HtmlCompat.FROM_HTML_MODE_LEGACY
+                )
+            }
+        )
+    }
+}
+
+
+@Composable
 fun USSDScreen(
     website: String,
     onUssdCodeChange: (String) -> Unit,
@@ -259,13 +292,7 @@ fun USSDScreen(
                 .heightIn(min = 100.dp)
                 .padding(8.dp) // For better text visibility
         )
-        val spanned = remember(html) {
-            HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY)
-        }
-
-        Text(
-            text = buildAnnotatedString { append(spanned.toString()) }
-        )
+        HtmlScreen(html)
     }
 }
 
