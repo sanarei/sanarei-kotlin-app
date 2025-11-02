@@ -156,8 +156,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun over(message: String) {
+                    val text = SanareiDepacketizer.depacketize(capturedUssdMessages)
                     val last_message = capturedUssdMessages.get(0)
-                    ussdResponse.value = "Session Over:: $last_message"
+                    ussdResponse.value = "Session Over:: $text"
                     isSending.value = false
                     this@MainActivity.stopService(svc) // Dismiss the overlay
                 }
