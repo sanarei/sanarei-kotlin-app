@@ -83,7 +83,6 @@ class MainActivity : ComponentActivity() {
             SanareiMobileAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     USSDScreen(
-                        onUssdCodeChange = { ussdCode.value = it },
                         website = website.value,
                         onUssdCodeChange = { website.value = it },
                         response = ussdResponse.value,
