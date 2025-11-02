@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
     private val ussdCode = mutableStateOf("*619*11#") // Default or empty
     private val ussdResponse = mutableStateOf("USSD Response will appear here.")
     private val isSending = mutableStateOf(false)
+    private val capturedUssdMessages = mutableListOf<String>()
 
     // Permission Launcher to handle multiple permissions
     private val requestMultiplePermissionsLauncher =
@@ -155,7 +156,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun over(message: String) {
-                    ussdResponse.value = "Session Over: $message"
+                    val last_message = capturedUssdMessages.get(0)
+                    ussdResponse.value = "Session Over:: $last_message"
                     isSending.value = false
                     this@MainActivity.stopService(svc) // Dismiss the overlay
                 }
@@ -180,6 +182,7 @@ class MainActivity : ComponentActivity() {
                 sendNextUSSDInput("END SESSION") // Select Account Services
                 // Compile all packets received
             } else {
+                capturedUssdMessages.add(responseMessage)
                 sendNextUSSDInput("SEND NEXT PACKETS") // Fetch all the packets
             }
         }
