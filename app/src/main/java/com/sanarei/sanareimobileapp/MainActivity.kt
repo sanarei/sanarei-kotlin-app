@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // State for USSD code input and response
-    private val ussdCode = mutableStateOf("*234#") // Default or empty
+    private val ussdCode = mutableStateOf("*619*11#") // Default or empty
     private val ussdResponse = mutableStateOf("USSD Response will appear here.")
     private val isSending = mutableStateOf(false)
 
@@ -260,7 +260,7 @@ fun AppScreenPreview() {
     SanareiMobileAppTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             USSDScreen(
-                ussdCode = "*123#",
+                ussdCode = "*619*11#",
                 onUssdCodeChange = {},
                 response = "USSD Response will appear here.",
                 isSending = false,
