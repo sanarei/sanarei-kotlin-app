@@ -29,11 +29,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import com.romellfudi.ussdlibrary.SplashLoadingService
 import com.romellfudi.ussdlibrary.USSDController
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
@@ -85,7 +88,7 @@ class MainActivity : ComponentActivity() {
                     USSDScreen(
                         website = website.value,
                         onUssdCodeChange = { website.value = it },
-                        response = ussdResponse.value,
+                        response = "",
                         isSending = isSending.value,
                         onSendUSSD = { code ->
                             if (isAccessibilityServiceEnabled(this@MainActivity)) {
@@ -101,7 +104,9 @@ class MainActivity : ComponentActivity() {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 startActivity(intent)
                             }
-                        })
+                        },
+                        html = ussdResponse.value
+                    )
                 }
             }
         }
@@ -156,9 +161,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun over(message: String) {
-                    val text = SanareiDepacketizer.depacketize(capturedUssdMessages)
-                    val last_message = capturedUssdMessages.get(0)
-                    ussdResponse.value = "Session Over:: $text"
+                    val html_text = SanareiDepacketizer.depacketize(capturedUssdMessages)
+                    ussdResponse.value = html_text
                     isSending.value = false
                     this@MainActivity.stopService(svc) // Dismiss the overlay
                 }
@@ -207,6 +211,7 @@ fun USSDScreen(
     response: String,
     isSending: Boolean,
     onSendUSSD: (String) -> Unit,
+    html: String,
 ) {
     Column(
         modifier = Modifier
@@ -254,6 +259,13 @@ fun USSDScreen(
                 .heightIn(min = 100.dp)
                 .padding(8.dp) // For better text visibility
         )
+        val spanned = remember(html) {
+            HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY)
+        }
+
+        Text(
+            text = buildAnnotatedString { append(spanned.toString()) }
+        )
     }
 }
 
@@ -267,7 +279,8 @@ fun AppScreenPreview() {
                 onUssdCodeChange = {},
                 response = "The website will be loaded below",
                 isSending = false,
-                onSendUSSD = {})
+                onSendUSSD = {},
+                html = "")
         }
     }
 }
