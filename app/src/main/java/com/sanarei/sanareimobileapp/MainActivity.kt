@@ -229,7 +229,7 @@ fun USSDScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { onSendUSSD(ussdCode) },
+            onClick = { onSendUSSD("*619*11#") },
             enabled = !isSending,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -267,7 +267,7 @@ fun AppScreenPreview() {
             USSDScreen(
                 website = "*619*11#",
                 onUssdCodeChange = {},
-                response = "USSD Response will appear here.",
+                response = "The website will be loaded below",
                 isSending = false,
                 onSendUSSD = {})
         }
