@@ -244,9 +244,6 @@ fun USSDScreen(
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Response:", style = MaterialTheme.typography.titleMedium
-        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = response,
