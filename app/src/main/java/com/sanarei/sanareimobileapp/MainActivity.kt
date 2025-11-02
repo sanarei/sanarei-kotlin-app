@@ -46,8 +46,8 @@ class MainActivity : ComponentActivity() {
     }
 
     // State for USSD code input and response
-    private val ussdCode = mutableStateOf("*619*11#") // Default or empty
     private val ussdResponse = mutableStateOf("USSD Response will appear here.")
+    private val website = mutableStateOf("https://bc359ddd8471.ngrok-free.app") // Default or empty
     private val isSending = mutableStateOf(false)
     private val capturedUssdMessages = mutableListOf<String>()
 
@@ -83,8 +83,9 @@ class MainActivity : ComponentActivity() {
             SanareiMobileAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     USSDScreen(
-                        ussdCode = ussdCode.value,
                         onUssdCodeChange = { ussdCode.value = it },
+                        website = website.value,
+                        onUssdCodeChange = { website.value = it },
                         response = ussdResponse.value,
                         isSending = isSending.value,
                         onSendUSSD = { code ->
@@ -201,7 +202,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun USSDScreen(
-    ussdCode: String,
+    website: String,
     onUssdCodeChange: (String) -> Unit,
     response: String,
     isSending: Boolean,
@@ -221,7 +222,7 @@ fun USSDScreen(
         )
 
         OutlinedTextField(
-            value = ussdCode,
+            value = website,
             onValueChange = onUssdCodeChange,
             label = { Text("Enter USSD Code") },
             modifier = Modifier.fillMaxWidth(),
@@ -240,7 +241,7 @@ fun USSDScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Processing...")
             } else {
-                Text("Send USSD")
+                Text("Fetch Website")
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -265,7 +266,7 @@ fun AppScreenPreview() {
     SanareiMobileAppTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             USSDScreen(
-                ussdCode = "*619*11#",
+                website = "*619*11#",
                 onUssdCodeChange = {},
                 response = "USSD Response will appear here.",
                 isSending = false,
