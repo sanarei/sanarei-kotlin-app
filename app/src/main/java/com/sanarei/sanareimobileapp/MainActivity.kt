@@ -223,7 +223,7 @@ fun USSDScreen(
         OutlinedTextField(
             value = website,
             onValueChange = onUssdCodeChange,
-            label = { Text("Enter USSD Code") },
+            label = { Text("Enter website") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
