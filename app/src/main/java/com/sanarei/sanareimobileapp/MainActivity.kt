@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
                                 sendUSSD(code)
                             } else {
                                 ussdResponse.value =
-                                    "Accessibility Service for VoIpUSSD is not enabled. Please enable it in settings."
+                                    "Accessibility Service is not enabled. Please enable it in settings."
                                 Toast.makeText(
                                     this@MainActivity,
                                     "Please enable the USSD Accessibility Service",
@@ -215,7 +215,7 @@ fun USSDScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "VoIP USSD Interaction",
+            text = "Sanarei Offline Web Browsing",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 24.dp)
         )
