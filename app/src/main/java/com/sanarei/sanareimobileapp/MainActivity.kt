@@ -217,7 +217,7 @@ fun HtmlScreen(html: String) {
             .padding(bottom = 60.dp) // reserve space at bottom
             .fillMaxSize()
             .background(Color.White)
-            .padding( top = 16.dp) // top padding
+            .padding( top = 8.dp) // top padding
             .padding(horizontal = 16.dp) // internal padding
     ) {
         AndroidView(
@@ -278,20 +278,17 @@ fun USSDScreen(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
                 Text("Processing...")
             } else {
                 Text("Fetch Website")
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = response,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 100.dp)
+                .heightIn(5.dp)
                 .padding(8.dp) // For better text visibility
         )
         HtmlScreen(html)
