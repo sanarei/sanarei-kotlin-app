@@ -214,9 +214,11 @@ class MainActivity : ComponentActivity() {
 fun HtmlScreen(html: String) {
     Box(
         modifier = Modifier
+            .padding(bottom = 60.dp) // reserve space at bottom
             .fillMaxSize()
             .background(Color.White)
-            .padding(16.dp)
+            .padding( top = 16.dp) // top padding
+            .padding(horizontal = 16.dp) // internal padding
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
