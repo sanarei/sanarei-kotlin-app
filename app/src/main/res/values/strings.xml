@@ -2,5 +2,4 @@
     <string name="app_name">Sanarei</string>
     <string name="ussd_accessibility_service_description">This service is required to automate USSD interactions for VoIP.</string>
     <string name="ussd_loading_message">Fetching website over USSD…</string>
-    <string name="overlay_permission_required">Allow Sanarei to display over other apps so it can hide the USSD prompts while loading.</string>
 </resources>

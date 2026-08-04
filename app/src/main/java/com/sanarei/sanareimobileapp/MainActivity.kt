@@ -55,21 +55,6 @@ class MainActivity : ComponentActivity() {
     private val ussdResponse = mutableStateOf("The website will be loaded below.")
     private val isSending = mutableStateOf(false)
     private val capturedUssdMessages = mutableListOf<String>()
-    private val loadingOverlay by lazy { UssdLoadingOverlay(applicationContext) }
-    private var pendingUssdCode: String? = null
-
-    private val overlayPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            val code = pendingUssdCode
-            pendingUssdCode = null
-            if (Settings.canDrawOverlays(this) && code != null) {
-                sendUSSD(code)
-            } else {
-                isSending.value = false
-                ussdResponse.value = getString(R.string.overlay_permission_required)
-                Toast.makeText(this, R.string.overlay_permission_required, Toast.LENGTH_LONG).show()
-            }
-        }
 
     // Permission Launcher to handle multiple permissions
     private val requestMultiplePermissionsLauncher =
@@ -109,7 +94,7 @@ class MainActivity : ComponentActivity() {
                         isSending = isSending.value,
                         onSendUSSD = { code ->
                             if (isAccessibilityServiceEnabled(this@MainActivity)) {
-                                sendUSSDWithOverlayPermission(code)
+                                sendUSSD(code)
                             } else {
                                 ussdResponse.value =
                                     "Accessibility Service is not enabled. Please enable it in settings."
@@ -158,10 +143,10 @@ class MainActivity : ComponentActivity() {
         capturedUssdMessages.clear()
         isSending.value = true
         ussdResponse.value = "Sending USSD: $code..."
-        loadingOverlay.show()
+        SanareiUssdAccessibilityService.showLoadingOverlay()
 
         try {
-            USSDController.callUSSDInvoke(
+            UssdSessionLauncher.start(
                 this, Uri.encode(code), 0, map, object : USSDController.CallbackInvoke {
                 override fun responseInvoke(message: String) {
                     ussdResponse.value = "Initial Response: $message"
@@ -170,7 +155,7 @@ class MainActivity : ComponentActivity() {
                         sendNextUSSDInput(website.value)
                     } else {
                         isSending.value = false
-                        loadingOverlay.hide()
+                        SanareiUssdAccessibilityService.hideLoadingOverlay()
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
                             this@MainActivity,
@@ -182,7 +167,7 @@ class MainActivity : ComponentActivity() {
 
                 override fun over(message: String) {
                     isSending.value = false
-                    loadingOverlay.hide()
+                    SanareiUssdAccessibilityService.hideLoadingOverlay()
                     ussdResponse.value = if (capturedUssdMessages.isEmpty()) {
                         message
                     } else {
@@ -195,26 +180,10 @@ class MainActivity : ComponentActivity() {
                 }
             })
         } catch (error: RuntimeException) {
-            loadingOverlay.hide()
+            SanareiUssdAccessibilityService.hideLoadingOverlay()
             isSending.value = false
             ussdResponse.value = "Unable to start USSD session: ${error.message}"
         }
-    }
-
-    private fun sendUSSDWithOverlayPermission(code: String) {
-        if (Settings.canDrawOverlays(this)) {
-            sendUSSD(code)
-            return
-        }
-
-        pendingUssdCode = code
-        ussdResponse.value = getString(R.string.overlay_permission_required)
-        overlayPermissionLauncher.launch(
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")
-            )
-        )
     }
 
     // New function to handle sending subsequent inputs
@@ -243,16 +212,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        val expectedComponentName = packageName + "/com.romellfudi.ussdlibrary.USSDServiceKT"
+        val expectedComponentName = packageName + "/" +
+            SanareiUssdAccessibilityService::class.java.name
         val enabledServicesSetting = Settings.Secure.getString(
             context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         )
         return enabledServicesSetting?.contains(expectedComponentName, ignoreCase = true) ?: false
-    }
-
-    override fun onDestroy() {
-        loadingOverlay.hide()
-        super.onDestroy()
     }
 }
 
