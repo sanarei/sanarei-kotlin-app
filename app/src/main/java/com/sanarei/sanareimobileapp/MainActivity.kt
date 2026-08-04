@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // State for USSD code input and response
-    private val website = mutableStateOf("https://bc359ddd8471.ngrok-free.app") // Default or empty
+    private val website = mutableStateOf("https://sanarei-sample-app.onrender.com") // Default or empty
     private val ussdResponse = mutableStateOf("The website will be loaded below.")
     private val isSending = mutableStateOf(false)
     private val capturedUssdMessages = mutableListOf<String>()
@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
                     isSending.value = false // Update UI
 
                     if (message.contains("Enter App domain", ignoreCase = true)) {
-                        sendNextUSSDInput("https://bc359ddd8471.ngrok-free.app")
+                        sendNextUSSDInput("https://sanarei-sample-app.onrender.com")
                     } else {
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
