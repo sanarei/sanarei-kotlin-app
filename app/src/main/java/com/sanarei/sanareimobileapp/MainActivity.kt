@@ -167,8 +167,7 @@ class MainActivity : ComponentActivity() {
 
                 override fun over(message: String) {
                     isSending.value = false
-                    SanareiUssdAccessibilityService.hideLoadingOverlay()
-                    ussdResponse.value = if (capturedUssdMessages.isEmpty()) {
+                    val page = if (capturedUssdMessages.isEmpty()) {
                         message
                     } else {
                         try {
@@ -176,6 +175,12 @@ class MainActivity : ComponentActivity() {
                         } catch (error: RuntimeException) {
                             "Unable to reconstruct the page: ${error.message}"
                         }
+                    }
+                    ussdResponse.value = page
+                    if (capturedUssdMessages.isEmpty()) {
+                        SanareiUssdAccessibilityService.hideLoadingOverlay()
+                    } else {
+                        SanareiUssdAccessibilityService.showPageOverlay(page, website.value)
                     }
                 }
             })

@@ -15,7 +15,8 @@ class SanareiUssdAccessibilityService : USSDServiceKT() {
         super.onServiceConnected()
         loadingOverlay = UssdLoadingOverlay(
             this,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            onClose = { hideOverlay() }
         )
         instance = this
     }
@@ -28,7 +29,7 @@ class SanareiUssdAccessibilityService : USSDServiceKT() {
 
     private fun showOverlay() {
         if (!::loadingOverlay.isInitialized) return
-        loadingOverlay.show()
+        loadingOverlay.showLoading()
         handler.removeCallbacks(overlayTimeout)
         handler.postDelayed(overlayTimeout, OVERLAY_TIMEOUT_MILLIS)
     }
@@ -36,6 +37,11 @@ class SanareiUssdAccessibilityService : USSDServiceKT() {
     private fun hideOverlay() {
         handler.removeCallbacks(overlayTimeout)
         if (::loadingOverlay.isInitialized) loadingOverlay.hide()
+    }
+
+    private fun showPage(html: String, baseUrl: String?) {
+        handler.removeCallbacks(overlayTimeout)
+        if (::loadingOverlay.isInitialized) loadingOverlay.showPage(html, baseUrl)
     }
 
     companion object {
@@ -46,5 +52,8 @@ class SanareiUssdAccessibilityService : USSDServiceKT() {
         fun showLoadingOverlay() = instance?.showOverlay()
 
         fun hideLoadingOverlay() = instance?.hideOverlay()
+
+        fun showPageOverlay(html: String, baseUrl: String?) =
+            instance?.showPage(html, baseUrl)
     }
 }
