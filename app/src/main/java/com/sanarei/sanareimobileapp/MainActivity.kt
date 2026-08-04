@@ -81,6 +81,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        SanareiUssdAccessibilityService.setNavigationHandler { url ->
+            if (isSending.value) {
+                false
+            } else {
+                website.value = url
+                sendUSSD("*619*11#")
+                true
+            }
+        }
+
         // Request permissions when the activity is created or when needed
         checkAndRequestPermissions()
 
@@ -155,7 +165,7 @@ class MainActivity : ComponentActivity() {
                         sendNextUSSDInput(website.value)
                     } else {
                         isSending.value = false
-                        SanareiUssdAccessibilityService.hideLoadingOverlay()
+                        SanareiUssdAccessibilityService.showErrorOverlay(message)
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
                             this@MainActivity,
@@ -178,14 +188,16 @@ class MainActivity : ComponentActivity() {
                     }
                     ussdResponse.value = page
                     if (capturedUssdMessages.isEmpty()) {
-                        SanareiUssdAccessibilityService.hideLoadingOverlay()
+                        SanareiUssdAccessibilityService.showErrorOverlay(page)
                     } else {
                         SanareiUssdAccessibilityService.showPageOverlay(page, website.value)
                     }
                 }
             })
         } catch (error: RuntimeException) {
-            SanareiUssdAccessibilityService.hideLoadingOverlay()
+            SanareiUssdAccessibilityService.showErrorOverlay(
+                "Unable to start USSD session: ${error.message}"
+            )
             isSending.value = false
             ussdResponse.value = "Unable to start USSD session: ${error.message}"
         }
@@ -223,6 +235,11 @@ class MainActivity : ComponentActivity() {
             context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         )
         return enabledServicesSetting?.contains(expectedComponentName, ignoreCase = true) ?: false
+    }
+
+    override fun onDestroy() {
+        SanareiUssdAccessibilityService.clearNavigationHandler()
+        super.onDestroy()
     }
 }
 

@@ -5,4 +5,8 @@
     <string name="overlay_browser_title">Sanarei Offline Browser</string>
     <string name="overlay_refresh">Refresh</string>
     <string name="overlay_close">Close</string>
+    <string name="overlay_back">‹</string>
+    <string name="overlay_forward">›</string>
+    <string name="overlay_back_description">Back</string>
+    <string name="overlay_forward_description">Forward</string>
 </resources>
