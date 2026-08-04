@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
-import com.romellfudi.ussdlibrary.SplashLoadingService
 import com.romellfudi.ussdlibrary.USSDController
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
@@ -140,20 +139,20 @@ class MainActivity : ComponentActivity() {
             ussdResponse.value = "USSD code cannot be empty."
             return
         }
+
+        capturedUssdMessages.clear()
         isSending.value = true
         ussdResponse.value = "Sending USSD: $code..."
-        val svc = Intent(this@MainActivity, SplashLoadingService::class.java)
-        this@MainActivity.startService(svc) // Show the overlay
 
         USSDController.callUSSDInvoke(
             this, Uri.encode(code), 0, map, object : USSDController.CallbackInvoke {
                 override fun responseInvoke(message: String) {
                     ussdResponse.value = "Initial Response: $message"
-                    isSending.value = false // Update UI
 
                     if (message.contains("Enter App domain", ignoreCase = true)) {
-                        sendNextUSSDInput("https://sanarei-sample-app.onrender.com")
+                        sendNextUSSDInput(website.value)
                     } else {
+                        isSending.value = false
                         // Session might be over or no clear prompt for next step from this initial response
                         Toast.makeText(
                             this@MainActivity,
@@ -164,10 +163,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun over(message: String) {
-                    val html_text = SanareiDepacketizer.depacketize(capturedUssdMessages)
-                    ussdResponse.value = html_text
                     isSending.value = false
-                    this@MainActivity.stopService(svc) // Dismiss the overlay
+                    ussdResponse.value = if (capturedUssdMessages.isEmpty()) {
+                        message
+                    } else {
+                        try {
+                            SanareiDepacketizer.depacketize(capturedUssdMessages)
+                        } catch (error: RuntimeException) {
+                            "Unable to reconstruct the page: ${error.message}"
+                        }
+                    }
                 }
             })
     }
@@ -180,7 +185,6 @@ class MainActivity : ComponentActivity() {
         USSDController.send(input) { responseMessage ->
             // This is the lambda callback for the response to USSDController.send(input)
             ussdResponse.value = "Next Response: $responseMessage"
-            isSending.value = false
 
             if (responseMessage.contains("DOMAIN SET", ignoreCase = true)) {
                 sendNextUSSDInput("FETCH") // Send store number
