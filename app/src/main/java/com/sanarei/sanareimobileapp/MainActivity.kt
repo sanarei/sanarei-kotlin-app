@@ -7,24 +7,27 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.text.method.LinkMovementMethod
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -34,12 +37,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.text.HtmlCompat
 import com.romellfudi.ussdlibrary.USSDController
 import com.sanarei.sanareimobileapp.ui.theme.SanareiMobileAppTheme
 
@@ -100,7 +104,6 @@ class MainActivity : ComponentActivity() {
                     USSDScreen(
                         website = website.value,
                         onUssdCodeChange = { website.value = it },
-                        response = "",
                         isSending = isSending.value,
                         onSendUSSD = { code ->
                             if (isAccessibilityServiceEnabled(this@MainActivity)) {
@@ -116,8 +119,7 @@ class MainActivity : ComponentActivity() {
                                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                 startActivity(intent)
                             }
-                        },
-                        html = ussdResponse.value
+                        }
                     )
                 }
             }
@@ -177,20 +179,21 @@ class MainActivity : ComponentActivity() {
 
                 override fun over(message: String) {
                     isSending.value = false
-                    val page = if (capturedUssdMessages.isEmpty()) {
-                        message
-                    } else {
-                        try {
-                            SanareiDepacketizer.depacketize(capturedUssdMessages)
-                        } catch (error: RuntimeException) {
-                            "Unable to reconstruct the page: ${error.message}"
-                        }
-                    }
-                    ussdResponse.value = page
                     if (capturedUssdMessages.isEmpty()) {
-                        SanareiUssdAccessibilityService.showErrorOverlay(page)
-                    } else {
+                        ussdResponse.value = message
+                        SanareiUssdAccessibilityService.showErrorOverlay(message)
+                        return
+                    }
+
+                    try {
+                        val page = SanareiDepacketizer.depacketize(capturedUssdMessages)
+                        ussdResponse.value = page
                         SanareiUssdAccessibilityService.showPageOverlay(page, website.value)
+                    } catch (error: Exception) {
+                        val errorMessage =
+                            "Unable to reconstruct the page. Please try again."
+                        ussdResponse.value = "$errorMessage ${error.message.orEmpty()}".trim()
+                        SanareiUssdAccessibilityService.showErrorOverlay(errorMessage)
                     }
                 }
             })
@@ -244,87 +247,133 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HtmlScreen(html: String) {
-    Box(
-        modifier = Modifier
-            .padding(bottom = 60.dp) // reserve space at bottom
-            .fillMaxSize()
-            .background(Color.White)
-            .padding( top = 8.dp) // top padding
-            .padding(horizontal = 16.dp) // internal padding
-    ) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { context ->
-                TextView(context).apply {
-                    movementMethod = LinkMovementMethod.getInstance() // make links clickable
-                    setTextIsSelectable(true)
-                }
-            },
-            update = { textView ->
-                textView.text = HtmlCompat.fromHtml(
-                    html,
-                    HtmlCompat.FROM_HTML_MODE_LEGACY
-                )
-            }
-        )
-    }
-}
-
-
-@Composable
 fun USSDScreen(
     website: String,
     onUssdCodeChange: (String) -> Unit,
-    response: String,
     isSending: Boolean,
     onSendUSSD: (String) -> Unit,
-    html: String,
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
     ) {
-        Text(
-            text = "Sanarei Offline Web Browsing",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 24.dp, top = 24.dp)
-        )
-
-        OutlinedTextField(
-            value = website,
-            onValueChange = onUssdCodeChange,
-            label = { Text("Enter website") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = { onSendUSSD("*619*11#") },
-            enabled = !isSending,
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isSending) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary
+            Surface(
+                modifier = Modifier.size(92.dp),
+                shape = RoundedCornerShape(26.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 6.dp
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_logo),
+                    contentDescription = "Sanarei",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.padding(14.dp)
                 )
-                Text("Processing...")
-            } else {
-                Text("Fetch Website")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Browse without internet",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Enter a website and Sanarei will retrieve it over USSD.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp, bottom = 30.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(modifier = Modifier.padding(22.dp)) {
+                    Text(
+                        text = "Website address",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Include https:// for the best results.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = website,
+                        onValueChange = onUssdCodeChange,
+                        placeholder = { Text("https://example.com") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Button(
+                        onClick = { onSendUSSD("*619*11#") },
+                        enabled = !isSending,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Fetching website…")
+                        } else {
+                            Text("Fetch website", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "How it works",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "The page opens in the Sanarei browser when retrieval is complete. Links are cached as you browse.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
             }
         }
-        Text(
-            text = response,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(5.dp)
-                .padding(8.dp) // For better text visibility
-        )
-        HtmlScreen(html)
     }
 }
 
@@ -334,12 +383,11 @@ fun AppScreenPreview() {
     SanareiMobileAppTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             USSDScreen(
-                website = "*619*11#",
+                website = "https://sanarei-sample-app.onrender.com",
                 onUssdCodeChange = {},
-                response = "The website will be loaded below",
                 isSending = false,
-                onSendUSSD = {},
-                html = "")
+                onSendUSSD = {}
+            )
         }
     }
 }
