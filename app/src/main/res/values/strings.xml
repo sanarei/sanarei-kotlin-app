@@ -2,11 +2,20 @@
     <string name="app_name">Sanarei</string>
     <string name="ussd_accessibility_service_description">This service is required to automate USSD interactions for VoIP.</string>
     <string name="ussd_loading_message">Fetching website over USSD…</string>
-    <string name="overlay_browser_title">Sanarei Offline Browser</string>
+    <string name="overlay_loading_title">Preparing your page</string>
+    <string name="overlay_loading_hint">Keep Sanarei open while the page is assembled.</string>
+    <string name="overlay_browser_title">Sanarei Browser</string>
+    <string name="overlay_browser_subtitle">Browsing over USSD</string>
     <string name="overlay_refresh">Refresh</string>
     <string name="overlay_close">Close</string>
     <string name="overlay_back">‹</string>
     <string name="overlay_forward">›</string>
     <string name="overlay_back_description">Back</string>
     <string name="overlay_forward_description">Forward</string>
+    <string name="overlay_no_address">Offline page</string>
+    <string name="overlay_secure_address">Secure · %1$s</string>
+    <plurals name="overlay_cached_pages">
+        <item quantity="one">%1$d page cached for this session</item>
+        <item quantity="other">%1$d pages cached for this session</item>
+    </plurals>
 </resources>

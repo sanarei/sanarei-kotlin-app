@@ -3,11 +3,16 @@ package com.sanarei.sanareimobileapp
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
@@ -35,6 +40,8 @@ class UssdLoadingOverlay(
     private var forwardButton: Button? = null
     private var addressView: TextView? = null
     private var flashView: TextView? = null
+    private var pageProgress: ProgressBar? = null
+    private var cacheView: TextView? = null
     private var windowParams: WindowManager.LayoutParams? = null
     private val pageCache = mutableMapOf<String, String>()
     private val history = mutableListOf<String>()
@@ -105,6 +112,8 @@ class UssdLoadingOverlay(
         forwardButton = null
         addressView = null
         flashView = null
+        pageProgress = null
+        cacheView = null
         pageCache.clear()
         history.clear()
         historyIndex = -1
@@ -144,126 +153,246 @@ class UssdLoadingOverlay(
         }
     }
 
-    private fun createLoadingView(): View = LinearLayout(context).apply {
-        orientation = LinearLayout.VERTICAL
-        gravity = Gravity.CENTER
-        setPadding(dp(32), dp(32), dp(32), dp(32))
-        setBackgroundColor(Color.rgb(250, 250, 250))
+    private fun createLoadingView(): View = FrameLayout(context).apply {
+        setBackgroundColor(BROWSER_BACKGROUND)
 
-        addView(ImageView(context).apply {
-            setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_logo))
-            contentDescription = context.getString(R.string.app_name)
-        }, LinearLayout.LayoutParams(dp(96), dp(96)).apply {
-            bottomMargin = dp(28)
-        })
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(34), dp(36), dp(34), dp(34))
+            background = roundedBackground(Color.WHITE, 28)
+            elevation = dp(8).toFloat()
 
-        addView(ProgressBar(context), LinearLayout.LayoutParams(dp(48), dp(48)).apply {
-            bottomMargin = dp(24)
-        })
+            addView(ImageView(context).apply {
+                setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_logo))
+                contentDescription = context.getString(R.string.app_name)
+            }, LinearLayout.LayoutParams(dp(78), dp(78)).apply {
+                bottomMargin = dp(22)
+            })
 
-        addView(TextView(context).apply {
-            text = context.getString(R.string.ussd_loading_message)
-            textSize = 18f
-            setTextColor(Color.rgb(35, 35, 35))
-            gravity = Gravity.CENTER
+            addView(TextView(context).apply {
+                text = context.getString(R.string.overlay_loading_title)
+                textSize = 22f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(TEXT_PRIMARY)
+                gravity = Gravity.CENTER
+            })
+
+            addView(TextView(context).apply {
+                text = context.getString(R.string.ussd_loading_message)
+                textSize = 14f
+                setTextColor(TEXT_SECONDARY)
+                gravity = Gravity.CENTER
+                setPadding(0, dp(8), 0, dp(24))
+            })
+
+            addView(ProgressBar(
+                context,
+                null,
+                android.R.attr.progressBarStyleHorizontal
+            ).apply {
+                isIndeterminate = true
+                progressTintList = android.content.res.ColorStateList.valueOf(BRAND_BLUE)
+                indeterminateTintList = android.content.res.ColorStateList.valueOf(BRAND_BLUE)
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(4)
+            ))
+
+            addView(TextView(context).apply {
+                text = context.getString(R.string.overlay_loading_hint)
+                textSize = 12f
+                setTextColor(TEXT_MUTED)
+                gravity = Gravity.CENTER
+                setPadding(0, dp(18), 0, 0)
+            })
+        }, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.CENTER
+        ).apply {
+            leftMargin = dp(28)
+            rightMargin = dp(28)
         })
     }
 
     private fun createBrowserView(): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setBackgroundColor(Color.WHITE)
+        setPadding(dp(14), dp(16), dp(14), dp(12))
+        setBackgroundColor(BROWSER_BACKGROUND)
 
         addView(LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            setBackgroundColor(Color.rgb(245, 245, 245))
 
-            addView(TextView(context).apply {
-                text = context.getString(R.string.overlay_browser_title)
-                textSize = 18f
-                setTextColor(Color.rgb(25, 25, 25))
+            addView(FrameLayout(context).apply {
+                background = roundedBackground(Color.WHITE, 13)
+                elevation = dp(2).toFloat()
+                addView(ImageView(context).apply {
+                    setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_logo))
+                    contentDescription = context.getString(R.string.app_name)
+                    setPadding(dp(7), dp(7), dp(7), dp(7))
+                })
+            }, LinearLayout.LayoutParams(dp(44), dp(44)).apply {
+                rightMargin = dp(11)
+            })
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(TextView(context).apply {
+                    text = context.getString(R.string.overlay_browser_title)
+                    textSize = 18f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(TEXT_PRIMARY)
+                })
+                addView(TextView(context).apply {
+                    text = context.getString(R.string.overlay_browser_subtitle)
+                    textSize = 11f
+                    setTextColor(TEXT_MUTED)
+                })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-            addView(Button(context).apply {
-                text = context.getString(R.string.overlay_close)
-                setOnClickListener { onClose() }
-            })
+            addView(browserButton(
+                label = "×",
+                description = context.getString(R.string.overlay_close),
+                emphasized = true,
+                onClick = onClose
+            ), LinearLayout.LayoutParams(dp(44), dp(44)))
         }, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
-        ))
+        ).apply {
+            bottomMargin = dp(14)
+        })
 
         addView(LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), dp(4), dp(8), dp(4))
 
-            backButton = Button(context).apply {
-                text = context.getString(R.string.overlay_back)
-                contentDescription = context.getString(R.string.overlay_back_description)
-                setOnClickListener { moveInHistory(-1) }
-            }
-            addView(backButton)
+            backButton = browserButton(
+                label = context.getString(R.string.overlay_back),
+                description = context.getString(R.string.overlay_back_description),
+                onClick = { moveInHistory(-1) }
+            )
+            addView(backButton, LinearLayout.LayoutParams(dp(44), dp(44)).apply {
+                rightMargin = dp(7)
+            })
 
-            forwardButton = Button(context).apply {
-                text = context.getString(R.string.overlay_forward)
-                contentDescription = context.getString(R.string.overlay_forward_description)
-                setOnClickListener { moveInHistory(1) }
-            }
-            addView(forwardButton)
+            forwardButton = browserButton(
+                label = context.getString(R.string.overlay_forward),
+                description = context.getString(R.string.overlay_forward_description),
+                onClick = { moveInHistory(1) }
+            )
+            addView(forwardButton, LinearLayout.LayoutParams(dp(44), dp(44)).apply {
+                rightMargin = dp(7)
+            })
 
-            addView(Button(context).apply {
-                text = context.getString(R.string.overlay_refresh)
-                setOnClickListener { currentUrl?.let(::requestPage) }
+            addView(browserButton(
+                label = "↻",
+                description = context.getString(R.string.overlay_refresh),
+                onClick = { currentUrl?.let(::requestPage) }
+            ), LinearLayout.LayoutParams(dp(44), dp(44)).apply {
+                rightMargin = dp(9)
             })
 
             addressView = TextView(context).apply {
                 textSize = 12f
                 maxLines = 1
-                setTextColor(Color.DKGRAY)
-                setPadding(dp(8), 0, 0, 0)
+                ellipsize = TextUtils.TruncateAt.MIDDLE
+                setTextColor(TEXT_SECONDARY)
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(13), 0, dp(13), 0)
+                background = roundedBackground(Color.WHITE, 14, BORDER_COLOR)
             }
             addView(addressView, LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(44),
                 1f
             ))
         }, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            bottomMargin = dp(10)
+        })
+
+        pageProgress = ProgressBar(
+            context,
+            null,
+            android.R.attr.progressBarStyleHorizontal
+        ).apply {
+            max = 100
+            visibility = View.GONE
+            progressTintList = android.content.res.ColorStateList.valueOf(BRAND_BLUE)
+        }
+        addView(pageProgress, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dp(3)
         ))
 
         flashView = TextView(context).apply {
             visibility = View.GONE
-            setBackgroundColor(Color.rgb(183, 28, 28))
-            setTextColor(Color.WHITE)
-            textSize = 15f
+            background = roundedBackground(ERROR_BACKGROUND, 14)
+            setTextColor(ERROR_TEXT)
+            typeface = Typeface.DEFAULT_BOLD
+            textSize = 13f
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(12), dp(16), dp(12))
+            setPadding(dp(14), dp(12), dp(14), dp(12))
         }
         addView(flashView, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
-        ))
+        ).apply {
+            topMargin = dp(8)
+            bottomMargin = dp(8)
+        })
 
-        webView = WebView(context).apply {
-            setBackgroundColor(Color.WHITE)
-            webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
-                    interceptNavigation(url)
+        addView(FrameLayout(context).apply {
+            background = roundedBackground(Color.WHITE, 20, BORDER_COLOR)
+            clipToOutline = true
+            elevation = dp(2).toFloat()
 
-                override fun shouldOverrideUrlLoading(
-                    view: WebView,
-                    request: android.webkit.WebResourceRequest
-                ): Boolean = interceptNavigation(request.url.toString())
+            webView = WebView(context).apply {
+                setBackgroundColor(Color.WHITE)
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
+                        interceptNavigation(url)
+
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView,
+                        request: android.webkit.WebResourceRequest
+                    ): Boolean = interceptNavigation(request.url.toString())
+                }
+                webChromeClient = object : WebChromeClient() {
+                    override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                        pageProgress?.progress = newProgress
+                        pageProgress?.visibility =
+                            if (newProgress in 0..99) View.VISIBLE else View.GONE
+                    }
+                }
+                settings.builtInZoomControls = true
+                settings.displayZoomControls = false
+                settings.domStorageEnabled = true
+                settings.loadWithOverviewMode = true
+                settings.useWideViewPort = true
             }
-            settings.builtInZoomControls = true
-            settings.displayZoomControls = false
-            settings.domStorageEnabled = true
-        }
-        addView(webView, LinearLayout.LayoutParams(
+            addView(webView, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+        }, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             0,
             1f
+        ))
+
+        cacheView = TextView(context).apply {
+            textSize = 11f
+            setTextColor(TEXT_MUTED)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(9), 0, 0)
+        }
+        addView(cacheView, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
         ))
     }
 
@@ -277,6 +406,8 @@ class UssdLoadingOverlay(
         forwardButton = null
         addressView = null
         flashView = null
+        pageProgress = null
+        cacheView = null
         windowParams = null
     }
 
@@ -315,7 +446,12 @@ class UssdLoadingOverlay(
     }
 
     private fun renderPage(url: String?, html: String) {
-        addressView?.text = url.orEmpty()
+        addressView?.text = url.toBrowserAddress()
+        cacheView?.text = context.resources.getQuantityString(
+            R.plurals.overlay_cached_pages,
+            pageCache.size,
+            pageCache.size
+        )
         webView?.loadDataWithBaseURL(url, html, "text/html", "UTF-8", null)
         updateNavigationButtons()
     }
@@ -323,6 +459,60 @@ class UssdLoadingOverlay(
     private fun updateNavigationButtons() {
         backButton?.isEnabled = historyIndex > 0
         forwardButton?.isEnabled = historyIndex in 0 until history.lastIndex
+        backButton?.alpha = if (backButton?.isEnabled == true) 1f else 0.35f
+        forwardButton?.alpha = if (forwardButton?.isEnabled == true) 1f else 0.35f
+    }
+
+    private fun browserButton(
+        label: String,
+        description: String,
+        emphasized: Boolean = false,
+        onClick: () -> Unit
+    ): Button = Button(context).apply {
+        text = label
+        contentDescription = description
+        isAllCaps = false
+        textSize = if (label.length == 1) 25f else 13f
+        typeface = Typeface.DEFAULT_BOLD
+        setTextColor(if (emphasized) Color.WHITE else TEXT_PRIMARY)
+        minWidth = 0
+        minHeight = 0
+        minimumWidth = 0
+        minimumHeight = 0
+        setPadding(0, 0, 0, dp(2))
+        background = roundedBackground(
+            if (emphasized) BRAND_BLUE else Color.WHITE,
+            14,
+            if (emphasized) null else BORDER_COLOR
+        )
+        elevation = dp(if (emphasized) 2 else 0).toFloat()
+        setOnClickListener { onClick() }
+    }
+
+    private fun roundedBackground(
+        color: Int,
+        radiusDp: Int,
+        strokeColor: Int? = null
+    ): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(color)
+        cornerRadius = dp(radiusDp).toFloat()
+        strokeColor?.let { setStroke(dp(1), it) }
+    }
+
+    private fun String?.toBrowserAddress(): String {
+        if (this.isNullOrBlank()) return context.getString(R.string.overlay_no_address)
+        return try {
+            val uri = Uri.parse(this)
+            val location = buildString {
+                append(uri.host ?: this@toBrowserAddress)
+                val path = uri.path.orEmpty()
+                if (path.isNotBlank() && path != "/") append(path)
+            }
+            context.getString(R.string.overlay_secure_address, location)
+        } catch (_: RuntimeException) {
+            this
+        }
     }
 
     private fun setPageFocusable(focusable: Boolean) {
@@ -355,5 +545,13 @@ class UssdLoadingOverlay(
 
     companion object {
         private const val FLASH_DURATION_MILLIS = 6_000L
+        private val BROWSER_BACKGROUND = Color.rgb(244, 247, 252)
+        private val BRAND_BLUE = Color.rgb(67, 116, 205)
+        private val TEXT_PRIMARY = Color.rgb(24, 36, 58)
+        private val TEXT_SECONDARY = Color.rgb(70, 83, 107)
+        private val TEXT_MUTED = Color.rgb(112, 126, 150)
+        private val BORDER_COLOR = Color.rgb(221, 227, 237)
+        private val ERROR_BACKGROUND = Color.rgb(255, 235, 238)
+        private val ERROR_TEXT = Color.rgb(153, 27, 27)
     }
 }
