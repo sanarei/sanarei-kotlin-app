@@ -28,6 +28,7 @@ class UssdLoadingOverlay(
     private val context: Context,
     private val windowType: Int,
     private val onClose: () -> Unit,
+    private val onCancel: () -> Unit,
     private val onNavigate: (String) -> Boolean
 ) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -205,6 +206,27 @@ class UssdLoadingOverlay(
                 setTextColor(TEXT_MUTED)
                 gravity = Gravity.CENTER
                 setPadding(0, dp(18), 0, 0)
+            })
+
+            addView(Button(context).apply {
+                text = context.getString(R.string.overlay_cancel_request)
+                contentDescription = context.getString(R.string.overlay_cancel_request)
+                isAllCaps = false
+                textSize = 14f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(TEXT_SECONDARY)
+                minWidth = 0
+                minHeight = 0
+                minimumWidth = 0
+                minimumHeight = 0
+                setPadding(dp(18), 0, dp(18), 0)
+                background = roundedBackground(Color.WHITE, 14, BORDER_COLOR)
+                setOnClickListener { onCancel() }
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(46)
+            ).apply {
+                topMargin = dp(22)
             })
         }, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,

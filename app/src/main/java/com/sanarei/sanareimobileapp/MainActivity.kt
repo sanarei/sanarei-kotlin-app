@@ -94,6 +94,11 @@ class MainActivity : ComponentActivity() {
                 true
             }
         }
+        SanareiUssdAccessibilityService.setCancellationHandler {
+            isSending.value = false
+            capturedUssdMessages.clear()
+            ussdResponse.value = "Website request cancelled."
+        }
 
         // Request permissions when the activity is created or when needed
         checkAndRequestPermissions()
@@ -242,6 +247,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         SanareiUssdAccessibilityService.clearNavigationHandler()
+        SanareiUssdAccessibilityService.clearCancellationHandler()
         super.onDestroy()
     }
 }

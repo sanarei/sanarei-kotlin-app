@@ -4,6 +4,7 @@
     <string name="ussd_loading_message">Fetching website over USSD…</string>
     <string name="overlay_loading_title">Preparing your page</string>
     <string name="overlay_loading_hint">Keep Sanarei open while the page is assembled.</string>
+    <string name="overlay_cancel_request">Cancel request</string>
     <string name="overlay_browser_title">Sanarei Browser</string>
     <string name="overlay_browser_subtitle">Browsing over USSD</string>
     <string name="overlay_refresh">Refresh</string>
