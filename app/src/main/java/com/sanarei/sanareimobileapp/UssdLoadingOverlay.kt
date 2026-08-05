@@ -346,7 +346,7 @@ class UssdLoadingOverlay(
         })
 
         addView(FrameLayout(context).apply {
-            background = roundedBackground(Color.WHITE, 20, BORDER_COLOR)
+            background = bottomRoundedBackground(Color.WHITE, 20, BORDER_COLOR)
             clipToOutline = true
             elevation = dp(2).toFloat()
 
@@ -373,6 +373,7 @@ class UssdLoadingOverlay(
                 settings.domStorageEnabled = true
                 settings.loadWithOverviewMode = true
                 settings.useWideViewPort = true
+                settings.textZoom = 260
             }
             addView(webView, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -497,6 +498,23 @@ class UssdLoadingOverlay(
         shape = GradientDrawable.RECTANGLE
         setColor(color)
         cornerRadius = dp(radiusDp).toFloat()
+        strokeColor?.let { setStroke(dp(1), it) }
+    }
+
+    private fun bottomRoundedBackground(
+        color: Int,
+        radiusDp: Int,
+        strokeColor: Int? = null
+    ): GradientDrawable = GradientDrawable().apply {
+        val radius = dp(radiusDp).toFloat()
+        shape = GradientDrawable.RECTANGLE
+        setColor(color)
+        cornerRadii = floatArrayOf(
+            0f, 0f,
+            0f, 0f,
+            radius, radius,
+            radius, radius
+        )
         strokeColor?.let { setStroke(dp(1), it) }
     }
 
