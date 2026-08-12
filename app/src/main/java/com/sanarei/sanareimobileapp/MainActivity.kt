@@ -220,8 +220,8 @@ class MainActivity : ComponentActivity() {
             // This is the lambda callback for the response to USSDController.send(input)
             ussdResponse.value = "Next Response: $responseMessage"
 
-            if (responseMessage.contains("DOMAIN SET", ignoreCase = true)) {
-                sendNextUSSDInput("FETCH") // Send store number
+            if (responseMessage.contains("URL SET", ignoreCase = true)) {
+                sendNextUSSDInput("FETCH CONTENT") // Send store number
             } else if (responseMessage.contains("PACKETS READY", ignoreCase = true)) {
                 sendNextUSSDInput("SEND PACKETS") // Select Account Services
             } else if (responseMessage.contains("ALL PACKETS SENT", ignoreCase = true)) {
