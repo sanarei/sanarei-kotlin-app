@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
                 override fun responseInvoke(message: String) {
                     ussdResponse.value = "Initial Response: $message"
 
-                    if (message.contains("Enter App domain", ignoreCase = true)) {
+                    if (message.contains("ENTER URL", ignoreCase = true)) {
                         sendNextUSSDInput(website.value)
                     } else {
                         isSending.value = false
